@@ -17,6 +17,6 @@ int main(){
         printf("%d ",board[i][j]);
       }
     }
-
+//;
     return 0;
 }
