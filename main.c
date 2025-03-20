@@ -4,11 +4,15 @@
 #include <stdbool.h>
 unsigned int board[8][8];
 
+/// player 0 = > white is down
+/// player 1 = > black is down
+
 struct pieces {
   char color[6];
   char type;
   int type_int;
   int x,y;
+  bool is_onboard;
 };
 
 void initialize_board(unsigned int board[][8],struct pieces black[],struct pieces white[],int player){
@@ -107,7 +111,7 @@ void show(unsigned board[][8],struct pieces black[],struct pieces white[]){
         else{
           if((i==white[k].x) && (white[k].y==j))
           {
-            printf("%c ",white[k].type);
+            printf("%c ",white[k].type-32);  /// white is upper yet
             is_piece=1;
               break;
           }  
@@ -132,21 +136,58 @@ void show_int_board(unsigned board[][8]){
     }
   }
  }
-int is_valid_move(struct pieces piece,int x, int y,unsigned board[][8]){ //ocupied spaces not verified yet
+bool is_valid_move(struct pieces piece,int x, int y,unsigned board[][8],int player){ //ocupied spaces not verified yet
   if(x<0||x>7||y<0||y>7)
     return false;
 
-
   if(piece.type=='p'){ // 1
-    return 1;
+    if(player==0){
+      if(piece.color[0]=='w'){
+        if(piece.x-1==x)
+          return true;
+        else
+          if(piece.x==6)
+            if(piece.x-2==x)
+              return true;
+      }
+      else{
+        if(piece.x+1==x)
+          return true;
+        else
+          if(piece.x==1)
+            if(piece.x+2==x)
+              return true;
+}
+    }
+    else{
+        if(piece.color[0]=='w'){
+          if(piece.x+1==x)
+            return true;
+          else
+            if(piece.x==1)
+              if(piece.x+2==x)
+                return true;
+        }
+        else{
+          if(piece.x-1==x)
+            return true;
+          else
+            if(piece.x==6)
+              if(piece.x-2==x)
+                return true;
+        }
+      }
+      return false;
+
   }
   if(piece.type=='b'){  // 2
     for(int i=0;i<8;i++){
       if((piece.x+i==x && piece.y+i==y) || (piece.x-i==x && piece.y-i==y))
           return true;
-//      if(piece.x+i==x && piece.y)
+      if ((piece.x + i == x && piece.y - i == y) || (piece.x - i == x && piece.y + i == y))
+        return true;
     }
-    return 2;
+    return false;
   }
   if(piece.type=='h'){ // 3
     if(((piece.x+2==x) && (piece.y+1==y)) || ((piece.x+2==x) && (piece.y-1==y)) || ((piece.x-2==x) && (piece.y-1==y)) || ((piece.x-2==x) && (piece.y+1==y)))
@@ -160,25 +201,49 @@ int is_valid_move(struct pieces piece,int x, int y,unsigned board[][8]){ //ocupi
 //    printf("%d%d ",piece.x,piece.y);
     return false;
   }
-  if(piece.type=='q'){ // 5
-    return 5;
+  if(piece.type=='q'){ // 5   rook + bishop
+    for(int i=0;i<8;i++){
+      if((piece.x+i==x && piece.y+i==y) || (piece.x-i==x && piece.y-i==y))
+        return true;
+      if ((piece.x + i == x && piece.y - i == y) || (piece.x - i == x && piece.y + i == y))
+        return true;
+      if((piece.x+i==x && piece.y==y) || (piece.y+i==y && piece.x==x) || (piece.x-i==x && piece.y==y) || (piece.x==x && piece.y-i==y))
+        return true;
+    }
+    return false;
   }
-  if(piece.type=='k'){ // 6
-    return 6;
+  if(piece.type=='k'){ // 6 to do
+    if((piece.x+1==x && piece.y+1==y) || ((piece.x+1==x) && (piece.y-1==y)) || ((piece.x+1==x) && (piece.y==y)))
+      return true;
+    if((piece.x-1==x && piece.y+1==y) ||((piece.x-1==x) && (piece.y-1==y)) || ((piece.x-1==x) && (piece.y==y)))
+      return true;
+    if((piece.x==x && piece.y-1==y) || (piece.x==x && piece.y+1==y))
+      return true;
+    return false;
   }
-
+  printf("%d %d",piece.x,piece.y);
   return false;
 }
 
-
-
 int main(){
     int player=0;
+//    int x=2,y=5;
+//    int p=6;
     struct pieces black[16];
     struct pieces white[16];
     initialize_board(board,black,white,player);
-    printf("%d",is_valid_move(white[2],6,1,board));
-//    show(board,black,white);
-    show_int_board(board);
+//    if(is_valid_move(black[p],x,y,board,player)){   /// test
+//      board[black[p].x][black[p].y]=board[x][y];
+//      board[x][y]=black[p].type_int;
+//      black[p].x=x;
+//      black[p].y=y;
+//      show_int_board(board);
+//    }
+//    else{
+//      printf("Invalid move\n");}
+//    printf("%d",is_valid_move(black[4],0,3,board,player));
+    show(board,black,white);
+//  show_int_board(board);
+
     return 0;
 }
