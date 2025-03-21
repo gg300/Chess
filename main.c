@@ -169,6 +169,25 @@ void show_int_board(int board[][8]){ //done
   }
  }
 
+bool is_clear_path(struct pieces piece,int x, int y,int board[][8]){ // to do
+
+  return true;
+}
+bool is_same_color(){ // to do
+
+    // implement using find_piece();
+
+  return false;
+}
+
+void out_of_board(struct pieces piece, int x, int y, int board[][8]){
+  board[x][y]=0;
+  piece.is_onboard = false;
+  piece.x=-1;
+  piece.y=-1;
+
+}
+
 bool is_valid_move(struct pieces piece,int x, int y,int board[][8],int setup){ //ocupied spaces not verified yet
   if(x<0||x>7||y<0||y>7)
     return false;
@@ -267,10 +286,11 @@ int convert_to_tablemove(char input){
 }
 
 void parse_move(char move[],int *x, int *y){
-  *x=convert_to_tablemove(move[1]);
-  *y=convert_to_tablemove(move[0]);
+  *x=convert_to_tablemove(move[1]);    /// move[1] in chess represents the x axis
+  *y=convert_to_tablemove(move[0]);    /// move[0] for y axis
   return;
 }
+
 int main(){
     int setup=0;
    int x=2,y=5;
@@ -294,11 +314,24 @@ int main(){
       // printf("%d%d",piece->x,piece->y);
       parse_move(move,&x,&y);
 
+      /// TO DO !!!
+
+      // find if space is clear then do is move clear
+      
+      //otherwise 
+      // find other piece first  find(piece)
+
+      // if is_valid_move && !is_same_color => out of the board with the other piece first
+
       if(is_valid_move(*piece,x,y,board,setup)){   /// test
+
+        
         board[piece->x][piece->y]=board[x][y];
         board[x][y]=piece->type_int;
         piece->x=x;
         piece->y=y;
+
+
         show(board,black,white);
         printf("\n");
         printf("Write moves like <piece> <position> or \"ex\" to exit\n");
