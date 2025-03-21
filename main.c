@@ -3,6 +3,12 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+
+#define BACKGROUND_WHITE "\x1b[47m"   /////define colors
+#define BACKGROUND_BLACK "\x1b[40m"
+#define RESET_ALL "\x1b[0m"
+#define TEXT_COLOR  "\x1b[39m"
+#define STYLE_BOLD "\x1b[1m"
 int board[8][8];
 
 /// setup 0 = > white is down
@@ -115,6 +121,11 @@ void show(int board[][8],struct pieces black[],struct pieces white[]){ //rudimen
     for(int j=0;j<8;j++){
       int is_piece = 0;
       for(int k=0;k<16;k++){
+        if((i+j)%2==0)
+            printf(BACKGROUND_BLACK);
+          else
+            printf(BACKGROUND_WHITE);
+            printf(TEXT_COLOR STYLE_BOLD);
         if((i==black[k].x) && (black[k].y==j)){
           is_piece=1;
           printf("%c ",black[k].type);
@@ -130,13 +141,14 @@ void show(int board[][8],struct pieces black[],struct pieces white[]){ //rudimen
         }
       }
         if(is_piece==0){
-
           if((i+j)%2==0)
-            printf("%c ", ' ');
+            printf(BACKGROUND_BLACK"  ");
           else
-            printf("%c ", '#');
+            printf(BACKGROUND_WHITE"  ");
           }
+        printf(RESET_ALL);
     }
+    
     printf("|");  // draw right margin
   }
   printf("\n");
