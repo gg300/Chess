@@ -121,11 +121,15 @@ void show(int board[][8],struct pieces black[],struct pieces white[]){ //rudimen
     for(int j=0;j<8;j++){
       int is_piece = 0;
       for(int k=0;k<16;k++){
+        printf(TEXT_COLOR STYLE_BOLD);
         if((i+j)%2==0)
-            printf(BACKGROUND_BLACK);
-          else
-            printf(BACKGROUND_WHITE);
-            printf(TEXT_COLOR STYLE_BOLD);
+        {
+          printf(BACKGROUND_BLACK);
+        }
+        else
+        {
+          printf(BACKGROUND_WHITE);
+        }
         if((i==black[k].x) && (black[k].y==j)){
           is_piece=1;
           printf("%c ",black[k].type);
