@@ -113,11 +113,11 @@ void initialize_board(int board[][8],struct pieces black[],struct pieces white[]
 }
 
 void show(int board[][8],struct pieces black[],struct pieces white[]){ //rudimentary done
-  printf("    ");
+  printf("   ");
   for(int i=0;i<9;i++)
   printf("= ");
   for(int i=0;i<8;i++){
-    printf("\n %d | ",i+1); // draw left margin
+    printf("\n %d |",i+1); // draw left margin
     for(int j=0;j<8;j++){
       int is_piece = 0;
       for(int k=0;k<16;k++){
@@ -156,11 +156,11 @@ void show(int board[][8],struct pieces black[],struct pieces white[]){ //rudimen
     printf("|");  // draw right margin
   }
   printf("\n");
-  printf("    ");
+  printf("   ");
   for(int i=0;i<9;i++) printf("= "); // draw down margin
   printf("\n");
 
-  printf("     ");
+  printf("    ");
   for(int i=0;i<8;i++)  //draw x axis
     printf("%c ",'a'+i);
 }
@@ -189,21 +189,25 @@ bool is_clear_path(struct pieces piece,int x, int y,int board[][8]){ // to do
 
   return true;
 }
-bool is_same_color(){ // to do
 
-    // implement using find_piece();
-
+bool is_same_color(struct pieces my_piece,struct pieces found_piece){ // to do
+  if (strcmp(my_piece.color,found_piece.color)==0)
+    return true;
   return false;
 }
 
-void out_of_board(struct pieces piece, int x, int y, int board[][8]){
-  board[x][y]=0;
-  piece.is_onboard = false;
-  piece.x=-1;
-  piece.y=-1;
+void out_of_board(struct pieces* piece){
+  board[piece->x][piece->y]=0;
+  piece->is_onboard = false;
+  piece->x=-1;
+  piece->y=-1;
 
 }
 
+bool is_valid_path(){
+  // path isn't valid if path isn't clear or the piece is the same color;
+  return true;
+}
 bool is_valid_move(struct pieces piece,int x, int y,int board[][8],int setup){ //ocupied spaces not verified yet
   if(x<0||x>7||y<0||y>7)
     return false;
@@ -260,6 +264,8 @@ bool is_valid_move(struct pieces piece,int x, int y,int board[][8],int setup){ /
   if(piece.type=='h'){ // 3
     if(((piece.x+2==x) && (piece.y+1==y)) || ((piece.x+2==x) && (piece.y-1==y)) || ((piece.x-2==x) && (piece.y-1==y)) || ((piece.x-2==x) && (piece.y+1==y)))
       return true;
+    if(((piece.x+1==x) && (piece.y+2==y)) || ((piece.x+1==x) && (piece.y-2==y)) || ((piece.x-1==x) && (piece.y-2==y)) || ((piece.x-1==x) && (piece.y+2==y)))
+      return true;   
     return false;
   }
   if(piece.type=='r'){ // 4
@@ -326,10 +332,13 @@ int main(){
       if((strcmp(piece_selector,"ex")==0) ||  (strcmp(move,"ex")==0))
         break;
       parse_move(piece_selector,&x,&y);
-      struct pieces *piece= find_piece(x,y,board,black,white);
+      struct pieces *piece= find_piece(x,y,board,black,white),*found_piece=NULL;
       // printf("%d%d",piece->x,piece->y);
       parse_move(move,&x,&y);
-
+        if(board[x][y]!=0)
+          {
+            found_piece = find_piece(x,y,board,black,white);
+          }
       /// TO DO !!!
 
       // find if space is clear then do is move clear
@@ -340,8 +349,10 @@ int main(){
       // if is_valid_move && !is_same_color => out of the board with the other piece first
 
       if(is_valid_move(*piece,x,y,board,setup)){   /// test
+        if(board[x][y]!=0){
+          out_of_board(found_piece);
+        }
 
-        
         board[piece->x][piece->y]=board[x][y];
         board[x][y]=piece->type_int;
         piece->x=x;
