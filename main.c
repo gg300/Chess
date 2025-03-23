@@ -185,13 +185,10 @@ void show_int_board(int board[][8]){ //done
   }
  }
 
-bool is_clear_path(struct pieces piece,int x, int y,int board[][8]){ // to do
-
-  return true;
-}
-
-bool is_same_color(struct pieces my_piece,struct pieces found_piece){ // to do
-  if (strcmp(my_piece.color,found_piece.color)==0)
+bool is_same_color(struct pieces* my_piece,struct pieces* found_piece){
+  if(found_piece==NULL)
+    return false;
+  if (strcmp(my_piece->color,found_piece->color)==0)
     return true;
   return false;
 }
@@ -204,11 +201,48 @@ void out_of_board(struct pieces* piece){
 
 }
 
-bool is_valid_path(){
-  // path isn't valid if path isn't clear or the piece is the same color;
+bool is_space_clear(int x,int y,int board[][8]){
+  if(board[x][y]==0)
+    return true;
+  return false;
+}
+
+bool is_valid_path(struct pieces piece,int x, int y,int board[][8],int setup){
+  if(piece.type=='r'){
+    if(piece.x!=x){
+      int px=piece.x;
+      if(px<x)
+      while(px!=x){
+        px++;
+        if(!is_space_clear(px,piece.y,board))
+          return false;
+      }
+      else
+      while(px!=x){
+        px--;
+        if(!is_space_clear(px,piece.y,board))
+          return false;
+      }
+    }
+    if(piece.y!=y){
+      int py=piece.y;
+      if(py<y)
+      while(py!=y){
+        py++;
+        if(!is_space_clear(piece.x,py,board))
+          return false;
+      }
+      else
+      while(py!=y){
+        py--;
+        if(!is_space_clear(piece.x,py,board))
+          return false;
+      }
+    }
+  }
   return true;
 }
-bool is_valid_move(struct pieces piece,int x, int y,int board[][8],int setup){ //ocupied spaces not verified yet
+bool is_valid_space(struct pieces piece,int x, int y,int board[][8],int setup){ //ocupied spaces not verified yet
   if(x<0||x>7||y<0||y>7)
     return false;
 
@@ -299,6 +333,12 @@ bool is_valid_move(struct pieces piece,int x, int y,int board[][8],int setup){ /
   return false;
 }
 
+bool is_valid_move(struct pieces piece,int x, int y,int board[][8],int setup){
+  if(is_valid_path(piece,x,y,board,setup) && is_valid_space(piece,x,y,board,setup))
+    return true;
+  return false;
+}
+
 int convert_to_tablemove(char input){
   if(isalpha(input))
     return toupper(input)-'A';
@@ -346,22 +386,30 @@ int main(){
       //otherwise 
       // find other piece first  find(piece)
 
-      // if is_valid_move && !is_same_color => out of the board with the other piece first
+      // if is_valid_space && !is_same_color => out of the board with the other piece first
 
       if(is_valid_move(*piece,x,y,board,setup)){   /// test
-        if(board[x][y]!=0){
+        bool same_color = is_same_color(piece,found_piece); 
+        if(board[x][y]!=0 && !same_color){
           out_of_board(found_piece);
         }
+        if(!same_color){
+          board[piece->x][piece->y]=board[x][y];
+          board[x][y]=piece->type_int;
+          piece->x=x;
+          piece->y=y;          
+          found_piece=NULL;
+        }
+        else{
+          printf("Same color!!");
+          found_piece=NULL;
+        }
 
-        board[piece->x][piece->y]=board[x][y];
-        board[x][y]=piece->type_int;
-        piece->x=x;
-        piece->y=y;
 
 
         show(board,black,white);
         printf("\n");
-        printf("Write moves like <piece> <position> or \"ex\" to exit\n");
+        printf("Write moves like \"piece position\" or \"ex\" to exit\n");
        //  show_int_board(board);
       } 
       else{
