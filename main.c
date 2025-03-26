@@ -207,10 +207,9 @@ bool is_space_clear(int x,int y,int board[][8]){
   return false;
 }
 
-bool is_valid_path(struct pieces piece,int x, int y,int board[][8],int setup){
+bool rook_valid_path(struct pieces piece,int x, int y,int board[][8]){
   int px=piece.x,py=piece.y;
-  if(piece.type=='r'){
-    if(piece.x!=x){
+    if(piece.x!=x && piece.y==y){
       if(px<x)
       while(px!=x-1){
         px++;
@@ -218,13 +217,13 @@ bool is_valid_path(struct pieces piece,int x, int y,int board[][8],int setup){
           return false;
       }
       else
-      while(px!=x-1){
+      while(px!=x+1){
         px--;
         if(!is_space_clear(px,py,board))
           return false;
       }
     }
-    if(py!=y){
+    if(py!=y && piece.x==x){
       if(py<y)
       while(py!=y-1){
         py++;
@@ -232,62 +231,81 @@ bool is_valid_path(struct pieces piece,int x, int y,int board[][8],int setup){
           return false;
       }
       else
-      while(py!=y-1){
+      while(py!=y+1){
         py--;
         if(!is_space_clear(px,py,board))
           return false;
       }
+    
+  }
+  return true;
+}
+bool bishop_valid_path(struct pieces piece,int x, int y,int board[][8]){
+  int px=piece.x,py=piece.y;
+  if((px<x) && (py<y)){ // move down the principal diagonal
+    while(px!=x-1 || py!=y-1){
+      px++;
+      py++;
+      if(!is_space_clear(px,py,board))
+        return false;
     }
+    if(px!=x-1 || py!=y-1)
+      return false;
+  }
+
+  if((px>x) && (py>y)){ // move up the principal diagonal
+    while(px!=x+1 || py!=y+1){
+      px--;
+      py--;
+      if(!is_space_clear(px,py,board))
+        return false;
+    }
+    if(px!=x+1 || py!=y+1)
+      return false;
+  }
+
+  if((px<x) && (py>y)){// move down the second diagonal
+    while(px!=x-1 || py!=y+1){
+      px++;
+      py--;
+      if(!is_space_clear(px,py,board))
+        return false;
+    }
+    if(px!=x-1 || py!=y+1)
+      return false;
+  }
+  if((px>x) && (py<y)){// move down the second diagonal
+    while(px!=x+1 || py!=y-1){
+      px--;
+      py++;
+      if(!is_space_clear(px,py,board))
+        return false;
+    }
+    if(px!=x+1 || py!=y-1)
+      return false;
+  }
+
+
+  return true;
+}
+
+bool is_valid_path(struct pieces piece,int x, int y,int board[][8],int setup){ ///king moves to do
+
+  // int px=piece.x,py=piece.y;
+  
+  if(piece.type=='r'){
+    return rook_valid_path(piece,x,y,board);
   }
   if(piece.type=='b'){
-    if((px<x) && (py<y)){ // move down the principal diagonal
-      while(px!=x-1 || py!=y-1){
-        px++;
-        py++;
-        if(!is_space_clear(px,py,board))
-          return false;
-      }
-      if(px!=x-1 || py!=y-1)
-        return false;
-    }
-
-    if((px>x) && (py>y)){ // move up the principal diagonal
-      while(px!=x+1 || py!=y+1){
-        px--;
-        py--;
-        if(!is_space_clear(px,py,board))
-          return false;
-      }
-      if(px!=x+1 || py!=y+1)
-        return false;
-    }
-
-    if((px<x) && (py>y)){// move down the second diagonal
-      while(px!=x-1 || py!=y+1){
-        px++;
-        py--;
-        if(!is_space_clear(px,py,board))
-          return false;
-      }
-      if(px!=x-1 || py!=y+1)
-        return false;
-    }
-    if((px>x) && (py<y)){// move down the second diagonal
-      while(px!=x+1 || py!=y-1){
-        px--;
-        py++;
-        if(!is_space_clear(px,py,board))
-          return false;
-      }
-      if(px!=x+1 || py!=y-1)
-        return false;
-    }
-
+    return bishop_valid_path(piece,x,y,board);    
   }
-  if(piece.type=='h');
-  if(piece.type=='k');
-  if(piece.type=='q');
-  if(piece.type=='p');
+  if(piece.type=='q'){
+    return bishop_valid_path(piece,x,y,board) && rook_valid_path(piece,x,y,board);
+  }
+  if(piece.type=='p'){
+    return rook_valid_path(piece,x,y,board);
+  }
+
   return true;
 }
 bool is_valid_space(struct pieces piece,int x, int y,int board[][8],int setup){ //ocupied spaces not verified yet
@@ -380,7 +398,6 @@ bool is_valid_space(struct pieces piece,int x, int y,int board[][8],int setup){ 
   printf("%d %d",piece.x,piece.y);
   return false;
 }
-
 bool is_valid_move(struct pieces piece,int x, int y,int board[][8],int setup){
   if(is_valid_path(piece,x,y,board,setup) && is_valid_space(piece,x,y,board,setup))
     return true;
