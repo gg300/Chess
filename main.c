@@ -418,7 +418,7 @@ void parse_move(char move[],int *x, int *y){
   return;
 }
 
-int main(){
+int main(){ // to implement winning condition and stalemate
     int setup=0;
    int x=2,y=5;
   //  int p=6;
