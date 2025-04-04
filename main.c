@@ -163,6 +163,8 @@ void show(int board[][8],struct pieces black[],struct pieces white[]){ //rudimen
   printf("    ");
   for(int i=0;i<8;i++)  //draw x axis
     printf("%c ",'a'+i);
+
+  printf("\n");
 }
 
 struct pieces* find_piece (int x, int y, int board[][8],struct pieces black[],struct pieces white[]){
@@ -418,69 +420,267 @@ void parse_move(char move[],int *x, int *y){
   return;
 }
 
-int main(){ // to implement winning condition and stalemate
-    int setup=0;
-   int x=2,y=5;
-  //  int p=6;
-    struct pieces black[16];
-    struct pieces white[16];
-    initialize_board(board,black,white,setup);
-    show(board,black,white);
-    printf("\nWrite moves like <piece> <position> \"ex\" to exit\n");
-
-    printf("\n");
-    while(true){
-      char piece_selector[3],move[3];   
-     
-      scanf("%s %s",piece_selector,move);
-      
-      if((strcmp(piece_selector,"ex")==0) ||  (strcmp(move,"ex")==0))
-        break;
-      parse_move(piece_selector,&x,&y);
-      struct pieces *piece= find_piece(x,y,board,black,white),*found_piece=NULL;
-      // printf("%d%d",piece->x,piece->y);
-      parse_move(move,&x,&y);
-        if(board[x][y]!=0)
-          {
-            found_piece = find_piece(x,y,board,black,white);
+bool check(struct pieces king, struct pieces black[], struct pieces white[], int board[][8], int setup) {
+  struct pieces *enemy_pieces;
+  int enemy_count = 16;
+  
+  if (strcmp(king.color, "white") == 0) {
+      enemy_pieces = black;
+  } else {
+      enemy_pieces = white;
+  }
+  
+  for (int i = 0; i < enemy_count; i++) {
+      if (enemy_pieces[i].is_onboard) {
+          if (is_valid_move(enemy_pieces[i], king.x, king.y, board, setup)) {
+              return true; // King is in check
           }
-      /// TO DO !!!
+      }
+  }
+  return false; // King is safe
+}
 
-      // find if space is clear then do is move clear
-      
-      //otherwise 
-      // find other piece first  find(piece)
+struct pieces* find_king(struct pieces pieces[]) {
+  for (int i = 0; i < 16; i++) {
+      if (pieces[i].type == 'k') {
+          return &pieces[i];
+      }
+  }
+  return NULL;
+}
 
-      // if is_valid_space && !is_same_color => out of the board with the other piece first
+bool is_king_in_check(struct pieces black[], struct pieces white[], int board[][8], int setup) {
+  struct pieces *white_king = find_king(white);
+  struct pieces *black_king = find_king(black);
+  
+  if (white_king && check(*white_king, black, white, board, setup)) {
+      printf("White king is in check!\n");
+      return true;
+  }
+  if (black_king && check(*black_king, black, white, board, setup)) {
+      printf("Black king is in check!\n");
+      return true;
+  }
+  return false;
+}
+bool is_stalemate(struct pieces player[], struct pieces enemy[], int board[][8], int setup) { //might not work 
+  for (int i = 0; i < 16; i++) {
+      if (player[i].is_onboard) {
+          for (int x = 0; x < 8; x++) {
+              for (int y = 0; y < 8; y++) {
+                  if (is_valid_move(player[i], x, y, board, setup)) {
+                      return false; // There is at least one legal move
+                  }
+              }
+          }
+      }
+  }
+  return true;
+}
 
-      if(is_valid_move(*piece,x,y,board,setup)){   /// test
-        bool same_color = is_same_color(piece,found_piece); 
-        if(board[x][y]!=0 && !same_color){
-          out_of_board(found_piece);
+bool is_checkmate(struct pieces player[], struct pieces enemy[], int board[][8], int setup) { /// might not work
+  struct pieces* king = NULL;
+  for (int i = 0; i < 16; i++) {
+      if (player[i].is_onboard && player[i].type == 'k') {
+          king = &player[i];
+          break;
+      }
+  }
+  if (king == NULL || !check(*king, enemy, player, board, setup)) {
+      return false; // No check => no checkmate
+  }
+  for (int i = 0; i < 16; i++) {
+      if (player[i].is_onboard) {
+          for (int x = 0; x < 8; x++) {
+              for (int y = 0; y < 8; y++) {
+                  if (is_valid_move(player[i], x, y, board, setup)) {
+                      return false; // There is at least one move to escape check
+                  }
+              }
+          }
+      }
+  }
+  return true;
+}
+void save(int board[][8], int player,char *path) {
+  FILE *file = fopen(path, "w");
+  if (file == NULL) {
+      printf("Couldn't open save file.\n");
+      return;
+  }
+
+  for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 8; j++) {
+          fprintf(file, "%d ", board[i][j]);
+      }
+      fprintf(file, "\n");
+  }
+
+  fprintf(file, "%d\n", player);
+
+  fclose(file);
+}
+
+void load(int board[][8], int *player, char* path) {
+  FILE *file = fopen(path, "r");
+  if (file == NULL) {
+      printf("Couldn't open load file.\n");
+      return;
+  }
+
+  for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 8; j++) {
+        if (fscanf(file, "%d", &board[i][j]) != 1) {
+          printf("Error reading at (%d, %d)\n", i, j);
+      } 
         }
-        if(!same_color){
-          board[piece->x][piece->y]=board[x][y];
-          board[x][y]=piece->type_int;
-          piece->x=x;
-          piece->y=y;          
-          found_piece=NULL;
+  }
+  fscanf(file,"\n");
+  fscanf(file, "%d", player);
+
+  fclose(file);
+}
+
+
+void play(){
+  int setup=0;
+  int x=2,y=5;
+  //  int p=6;
+  struct pieces black[16];
+  struct pieces white[16];
+  initialize_board(board,black,white,setup);
+  show(board,black,white);
+  printf("\nWrite moves like <piece> <position> \"ex\" to exit\n");
+  printf("\n");
+  int player=0;
+  // even player = white 
+  printf("Player 1 to move\n");
+  while(true){
+    char piece_selector[3],move[3];   
+    
+    scanf("%s %s",piece_selector,move);
+    
+    if((strcmp(piece_selector,"ex")==0) ||  (strcmp(move,"ex")==0))
+      break;
+    if(piece_selector[0]=='s' || move[0]=='s'){
+      save(board,player,"save.txt");
+      show(board,black,white);
+      printf("\nPlayer %d to move\n",(((player)%2)+1));
+      continue;
+    }
+    if(piece_selector[0]=='l' || move[0]=='l'){
+      load(board,&player,"save.txt");
+      show(board,black,white);
+      printf("\nPlayer %d to move\n",(((player)%2)+1));
+      continue;
+    }
+    parse_move(piece_selector,&x,&y);
+    struct pieces *piece= find_piece(x,y,board,black,white),*found_piece=NULL;
+    // printf("%d%d",piece->x,piece->y);
+    
+    
+    parse_move(move,&x,&y);
+      if(board[x][y]!=0)
+        {
+          found_piece = find_piece(x,y,board,black,white);
+        }
+    /// check if playercolor is good
+    // player 1 = > white, player 2 = > black
+        if(player%2==0){
+          while(!is_same_color(piece,&white[0])){
+            printf("\nWrong piece set\n");
+            show(board,black,white);
+            scanf("%s %s",piece_selector,move);
+            if((strcmp(piece_selector,"ex")==0) ||  (strcmp(move,"ex")==0))
+            break;
+            parse_move(piece_selector,&x,&y);
+            piece= find_piece(x,y,board,black,white);
+            // printf("%d%d",piece->x,piece->y);
+            parse_move(move,&x,&y);
+          }
         }
         else{
-          printf("Same color!!");
-          found_piece=NULL;
+          while(!is_same_color(piece,&black[0])){
+            printf("\nWrong piece set\n");
+            show(board,black,white);
+            scanf("%s %s",piece_selector,move);
+            if((strcmp(piece_selector,"ex")==0) ||  (strcmp(move,"ex")==0))
+            break;
+            parse_move(piece_selector,&x,&y);
+            piece= find_piece(x,y,board,black,white);
+            // printf("%d%d",piece->x,piece->y);
+            parse_move(move,&x,&y);
+          }
+        }
+         
+    /// TO DO !!!
+  
+    // find if space is clear then do is move clear
+    
+    //otherwise 
+    // find other piece first  find(piece)
+  
+    // if is_valid_space && !is_same_color => out of the board with the other piece first
+      if(is_king_in_check(black,white,board,setup)){
+        show(board,black,white);
+        continue;
+      }
+
+    if(is_valid_move(*piece,x,y,board,setup)){   /// test
+      bool same_color = is_same_color(piece,found_piece); 
+      if(board[x][y]!=0 && !same_color){
+        out_of_board(found_piece);
+      }
+      if(!same_color){
+        board[piece->x][piece->y]=board[x][y];
+        board[x][y]=piece->type_int;
+        piece->x=x;
+        piece->y=y;          
+        found_piece=NULL;
+      }
+      else{
+        printf("Same color!!");
+        found_piece=NULL;
+      }
+      show(board,black,white);
+      is_king_in_check(black,white,board,setup);
+      if(piece->color[0]=='w'){
+        if(is_checkmate(piece,black,board,setup)){
+          printf("\nPlayer %d WON\n",(((player+1)%2)+1));
+          break;
+        }
+        if(is_stalemate(piece,black,board,setup)){
+          printf("DRAW");
+          break;
         }
 
-
-
-        show(board,black,white);
-        printf("\n");
-        printf("Write moves like \"piece position\" or \"ex\" to exit\n");
-       //  show_int_board(board);
-      } 
-      else{
-        printf("Invalid move\n");
       }
+      else{
+        if(is_checkmate(piece,white,board,setup)){
+          printf("\nPlayer %d WON\n",(((player+1)%2)+1));
+          break;
+        }
+        if(is_stalemate(piece,white,board,setup)){
+          printf("DRAW");
+          break;
+        }
+      }
+      printf("\n");
+      printf("Write moves like \"piece position\" or \"ex\" to exit\n");
+      printf("\nPlayer %d to move\n",(((player+1)%2)+1));
+     //  show_int_board(board);
+    } 
+    else{
+      printf("Invalid move\n");
     }
+    ++player;
+  }
 
+}
+
+
+
+int main(){ // to implement winning condition and stalemate
+  play();
     return 0;
 }
